@@ -7,5 +7,6 @@ local mrf = require 'mrf'
 
 ok(mrf)
 mrf:open()
+mrf:reset()
 
 done_testing()

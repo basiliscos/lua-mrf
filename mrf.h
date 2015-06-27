@@ -13,6 +13,8 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
+#include "mrf89xa.h"
+
 #define DEBUG_LOG(format, ...) fprintf(stderr, format, ##__VA_ARGS__)
 #define DEVICE_FILE "/dev/mrf"
 
