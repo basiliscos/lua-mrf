@@ -6,5 +6,6 @@ local t = require 'Test.More'
 local mrf = require 'mrf'
 
 ok(mrf)
+mrf:open()
 
 done_testing()
