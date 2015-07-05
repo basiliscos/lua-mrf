@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <stdint.h>
 
 #include "lua.h"
 #include "lauxlib.h"
