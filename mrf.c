@@ -20,7 +20,7 @@ static int create_registry(lua_State *L) {
 static int mrf_open(lua_State *L) {
   mrf_device *md;
   int status;
-  
+
   DEBUG_LOG("mrf_open\n");
 
   md = luaL_checkudata(L, 1, MRF_MT);
@@ -33,14 +33,14 @@ static int mrf_open(lua_State *L) {
   }
   md->fd = status;
   md->state = (md->state | STATE_OPENED);
-  
+
   return 0;
 }
 
 static int mrf_reset(lua_State *L) {
   mrf_device *md;
   int status;
-  
+
   DEBUG_LOG("mrf_reset\n");
 
   md = luaL_checkudata(L, 1, MRF_MT);
@@ -51,13 +51,43 @@ static int mrf_reset(lua_State *L) {
   if (status) {
     luaL_error(L, "cannot reset mrf device(%d): %s", status, strerror(errno));
   }
-  
+
+  return 0;
+}
+
+static int mrf_set_addr(lua_State *L) {
+  mrf_device *md;
+  lua_Integer node_id;
+  lua_Integer network_id;
+  mrf_address addr;
+  int status;
+
+  DEBUG_LOG("mrf_set_addr\n");
+  md = luaL_checkudata(L, 1, MRF_MT);
+
+  node_id = luaL_checkinteger(L, 2);
+  if ((node_id <= 0) || (node_id > 255)) luaL_argerror(L, 2, "Invalid node address (must be in range 0x01 .. 0xFF");
+  network_id = luaL_checkinteger(L, 3);
+  addr.node_id = (uint8_t) node_id;
+  addr.network_id = (uint32_t) network_id;
+
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened set addr");
+  }
+
+  status = ioctl(md->fd, MRF_IOC_SETADDR, &addr);
+  if (status) {
+    luaL_error(L, "cannot set address for mrf device(%d): %s", status, strerror(errno));
+  }
+
+
   return 0;
 }
 
 static luaL_Reg mrf_methods[] = {
-  { "open",  mrf_open },
-  { "reset", mrf_reset },
+  { "open",     mrf_open },
+  { "reset",    mrf_reset },
+  { "set_addr", mrf_set_addr },
   { NULL, NULL }
 };
 
@@ -78,6 +108,6 @@ LUALIB_API int luaopen_mrf(lua_State *L) {
 
   /* assign metatable to mrf_device */
   lua_setmetatable(L, -2);
-  
+
   return 1; /* mrf_device */
 }
