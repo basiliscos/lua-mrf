@@ -24,6 +24,7 @@
 #define STATE_UNDEFINED 0
 #define STATE_OPENED 1
 
+#define ARRAY_LENGTH(array) (sizeof((array))/sizeof((array)[0]))
 
 typedef struct mrf_device {
   int fd;

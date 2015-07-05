@@ -17,6 +17,22 @@ static int create_registry(lua_State *L) {
 }
 #endif
 
+typedef struct mrf_constant {
+  const char* key;
+  uint32_t value;
+} mrf_constant;
+
+mrf_constant power_constants[] = {
+  {"-8",  MRF_TXPOWER_MINUS_8 },
+  {"-5",  MRF_TXPOWER_MINUS_5 },
+  {"-2",  MRF_TXPOWER_MINUS_2 },
+  {"+1",  MRF_TXPOWER_PLUS_1  },
+  {"+4",  MRF_TXPOWER_PLUS_4  },
+  {"+7",  MRF_TXPOWER_PLUS_7  },
+  {"+10", MRF_TXPOWER_PLUS_10 },
+  {"+13", MRF_TXPOWER_PLUS_13 },
+};
+
 static int mrf_open(lua_State *L) {
   mrf_device *md;
   int status;
@@ -80,14 +96,42 @@ static int mrf_set_addr(lua_State *L) {
     luaL_error(L, "cannot set address for mrf device(%d): %s", status, strerror(errno));
   }
 
+  return 0;
+}
+
+static int mrf_set_power(lua_State *L) {
+  mrf_device *md;
+  const char* power_label;
+  int i, status;
+  int idx = -1;
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened set addr");
+  }
+  power_label = luaL_checklstring(L, 2, NULL);
+
+  for (i = 0; i < ARRAY_LENGTH(power_constants); i++) {
+    if (strcmp(power_constants[i].key, power_label) == 0) {
+      idx = i;
+    }
+  }
+
+  if (idx == -1) luaL_error(L, "unknown/impossible tx power value '%s'", power_label);
+
+  status = ioctl(md->fd, MRF_IOC_SETPOWER, power_constants[idx].value);
+  if (status) {
+    luaL_error(L, "cannot set power %s on device(%d): %s", power_label, status, strerror(errno));
+  }
 
   return 0;
 }
 
 static luaL_Reg mrf_methods[] = {
-  { "open",     mrf_open },
-  { "reset",    mrf_reset },
-  { "set_addr", mrf_set_addr },
+  { "open",      mrf_open      },
+  { "reset",     mrf_reset     },
+  { "set_addr",  mrf_set_addr  },
+  { "set_power", mrf_set_power },
   { NULL, NULL }
 };
 
