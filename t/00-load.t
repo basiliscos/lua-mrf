@@ -7,8 +7,9 @@ local mrf = require 'mrf'
 
 ok(mrf)
 mrf:open()
-mrf:reset()
+mrf:reset(true)
 mrf:set_addr(0x01, 0x0A0B0C0D)
 mrf:set_power('-2');
+mrf:set_freq('864.74');
 
 done_testing()

@@ -33,6 +33,10 @@ mrf_constant power_constants[] = {
   {"+13", MRF_TXPOWER_PLUS_13 },
 };
 
+mrf_constant frequency_constants[] = {
+  {"864.74",  MRF_FREQ_864_74 },
+};
+
 static int mrf_open(lua_State *L) {
   mrf_device *md;
   int status;
@@ -111,9 +115,11 @@ static int mrf_set_power(lua_State *L) {
   int i, status;
   int idx = -1;
 
+  DEBUG_LOG("mrf_set_power\n");
+  
   md = luaL_checkudata(L, 1, MRF_MT);
   if (!(md->state & STATE_OPENED)) {
-    luaL_error(L, "mrf device should be opened set addr");
+    luaL_error(L, "mrf device should be opened before set power");
   }
   power_label = luaL_checklstring(L, 2, NULL);
 
@@ -133,11 +139,42 @@ static int mrf_set_power(lua_State *L) {
   return 0;
 }
 
+static int mrf_set_freq(lua_State *L) {
+  mrf_device *md;
+  const char* freq_label;
+  int i, status;
+  int idx = -1;
+
+  DEBUG_LOG("mrf_set_freq\n");
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened befor set frequency");
+  }
+  freq_label = luaL_checklstring(L, 2, NULL);
+
+  for (i = 0; i < ARRAY_LENGTH(frequency_constants); i++) {
+    if (strcmp(frequency_constants[i].key, freq_label) == 0) {
+      idx = i;
+    }
+  }
+
+  if (idx == -1) luaL_error(L, "unknown/impossible frequency value '%s'", freq_label);
+
+  status = ioctl(md->fd, MRF_IOC_SETFREQ,  frequency_constants[idx].value);
+  if (status) {
+    luaL_error(L, "cannot set frequency %s on device(%d): %s", freq_label, status, strerror(errno));
+  }
+
+  return 0;
+}
+
 static luaL_Reg mrf_methods[] = {
   { "open",      mrf_open      },
   { "reset",     mrf_reset     },
   { "set_addr",  mrf_set_addr  },
   { "set_power", mrf_set_power },
+  { "set_freq",  mrf_set_freq },
   { NULL, NULL }
 };
 
