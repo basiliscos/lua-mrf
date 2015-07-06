@@ -56,6 +56,7 @@ static int mrf_open(lua_State *L) {
 static int mrf_reset(lua_State *L) {
   mrf_device *md;
   int status;
+  int reinitialize_registers = 0;
 
   DEBUG_LOG("mrf_reset\n");
 
@@ -63,7 +64,12 @@ static int mrf_reset(lua_State *L) {
   if (!(md->state & STATE_OPENED)) {
     luaL_error(L, "mrf device should be opened before reset");
   }
-  status = ioctl(md->fd, MRF_IOC_RESET, NULL);
+
+  if (lua_gettop(L) >= 2) {
+    reinitialize_registers = lua_toboolean(L, 2);
+  }
+
+  status = ioctl(md->fd, MRF_IOC_RESET, reinitialize_registers);
   if (status) {
     luaL_error(L, "cannot reset mrf device(%d): %s", status, strerror(errno));
   }
