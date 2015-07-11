@@ -34,7 +34,7 @@ mrf_constant power_constants[] = {
 };
 
 mrf_constant frequency_constants[] = {
-  {"864.74",  MRF_FREQ_864_74 },
+  {"863.74",  MRF_FREQ_863_74 },
 };
 
 static int mrf_open(lua_State *L) {
@@ -116,7 +116,7 @@ static int mrf_set_power(lua_State *L) {
   int idx = -1;
 
   DEBUG_LOG("mrf_set_power\n");
-  
+
   md = luaL_checkudata(L, 1, MRF_MT);
   if (!(md->state & STATE_OPENED)) {
     luaL_error(L, "mrf device should be opened before set power");
@@ -169,12 +169,32 @@ static int mrf_set_freq(lua_State *L) {
   return 0;
 }
 
+static int mrf_debug(lua_State *L) {
+  mrf_device *md;
+  int status;
+
+  DEBUG_LOG("mrf_debug\n");
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened first");
+  }
+
+  status = ioctl(md->fd, MRF_IOC_DEBUG);
+  if (status) {
+    luaL_error(L, "debug call error (%d): %s", status, strerror(errno));
+  }
+
+  return 0;
+}
+
 static luaL_Reg mrf_methods[] = {
   { "open",      mrf_open      },
   { "reset",     mrf_reset     },
   { "set_addr",  mrf_set_addr  },
   { "set_power", mrf_set_power },
-  { "set_freq",  mrf_set_freq },
+  { "set_freq",  mrf_set_freq  },
+  { "debug",     mrf_debug     },
   { NULL, NULL }
 };
 
