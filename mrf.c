@@ -188,13 +188,52 @@ static int mrf_debug(lua_State *L) {
   return 0;
 }
 
+static int mrf_send_frame(lua_State *L) {
+  mrf_device *md;
+  int status;
+  int destination_id;
+  size_t payload_length;
+  const char* payload_data;
+  mrf_frame frame;
+
+  DEBUG_LOG("mrf_send_frame\n");
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened first");
+  }
+
+  destination_id = luaL_checkinteger(L, 2);
+  if ((destination_id < 0) || (destination_id > 255)) {
+    luaL_error(L, "wrong destition address 0x%x", destination_id);
+  }
+
+  payload_data = luaL_checklstring(L, 3, &payload_length);
+  if (payload_length > MRF_MAX_PAYLOAD) {
+    luaL_error(L, "Too large payload (%d octets), max allowed %d octets",
+               payload_length, MRF_MAX_PAYLOAD);
+  }
+
+  /* all OK, send frame */
+  frame.dest = destination_id;
+  memcpy(frame.data, payload_data, payload_length);
+  status = write(md->fd, &frame, sizeof(frame) - payload_length);
+
+  if (status < 0) {
+    luaL_error(L, "write call error (%d): %s", status, strerror(errno));
+  }
+
+  return 0;
+}
+
 static luaL_Reg mrf_methods[] = {
-  { "open",      mrf_open      },
-  { "reset",     mrf_reset     },
-  { "set_addr",  mrf_set_addr  },
-  { "set_power", mrf_set_power },
-  { "set_freq",  mrf_set_freq  },
-  { "debug",     mrf_debug     },
+  { "open",       mrf_open       },
+  { "reset",      mrf_reset      },
+  { "set_addr",   mrf_set_addr   },
+  { "set_power",  mrf_set_power  },
+  { "set_freq",   mrf_set_freq   },
+  { "debug",      mrf_debug      },
+  { "send_frame", mrf_send_frame },
   { NULL, NULL }
 };
 

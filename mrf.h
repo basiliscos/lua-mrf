@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "lua.h"
 #include "lauxlib.h"
