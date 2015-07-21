@@ -15,5 +15,4 @@ local limit = 10000
 for i = 1, limit do
    mrf:debug()
    print("set beakon packet #" .. i)
-   unistd.sleep(1)
 end
