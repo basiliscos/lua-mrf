@@ -196,7 +196,7 @@ static int mrf_send_frame(lua_State *L) {
   const char* payload_data;
   mrf_frame frame;
 
-  DEBUG_LOG("mrf_send_frame\n");
+  //DEBUG_LOG("mrf_send_frame\n");
 
   md = luaL_checkudata(L, 1, MRF_MT);
   if (!(md->state & STATE_OPENED)) {
@@ -217,7 +217,7 @@ static int mrf_send_frame(lua_State *L) {
   /* all OK, send frame */
   frame.dest = destination_id;
   memcpy(frame.data, payload_data, payload_length);
-  status = write(md->fd, &frame, sizeof(frame) - payload_length);
+  status = write(md->fd, &frame, sizeof(frame) - sizeof(((mrf_frame*)0)->data) + payload_length);
 
   if (status < 0) {
     luaL_error(L, "write call error (%d): %s", status, strerror(errno));
