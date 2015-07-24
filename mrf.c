@@ -215,7 +215,7 @@ static int mrf_send_frame(lua_State *L) {
   }
 
   /* all OK, send frame */
-  frame.dest = destination_id;
+  frame.addr = destination_id;
   memcpy(frame.data, payload_data, payload_length);
   status = write(md->fd, &frame, sizeof(frame) - sizeof(((mrf_frame*)0)->data) + payload_length);
 
@@ -226,14 +226,56 @@ static int mrf_send_frame(lua_State *L) {
   return 0;
 }
 
+static int mrf_recv_frame(lua_State *L) {
+  mrf_device *md;
+  int status;
+  mrf_frame frame;
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened first");
+  }
+
+  memset(&frame, 0, sizeof(mrf_frame));
+  status = read(md->fd, &frame, sizeof(mrf_frame));
+  if (status <= 0) {
+    luaL_error(L, "raead call error (%d): %s", status, strerror(errno));
+  }
+
+  lua_pushinteger(L, frame.addr);
+  lua_pushlstring(L, (const char*) frame.data, status - sizeof(((mrf_frame*)0)->addr));
+
+  /* address & binary string */
+  return 2;
+}
+
+
+static int mrf_listen(lua_State *L) {
+  mrf_device *md;
+  int status;
+
+  md = luaL_checkudata(L, 1, MRF_MT);
+  if (!(md->state & STATE_OPENED)) {
+    luaL_error(L, "mrf device should be opened first");
+  }
+
+  status = ioctl(md->fd, MRF_IOC_LISTEN);
+  if (status) {
+    luaL_error(L, "listen call error (%d): %s", status, strerror(errno));
+  }
+  return 0;
+}
+
 static luaL_Reg mrf_methods[] = {
   { "open",       mrf_open       },
   { "reset",      mrf_reset      },
   { "set_addr",   mrf_set_addr   },
   { "set_power",  mrf_set_power  },
   { "set_freq",   mrf_set_freq   },
-  { "debug",      mrf_debug      },
   { "send_frame", mrf_send_frame },
+  { "recv_frame", mrf_recv_frame },
+  { "listen",     mrf_listen     },
+  { "debug",      mrf_debug      },
   { NULL, NULL }
 };
 

@@ -14,7 +14,6 @@ mrf:set_freq('863.74');
 local limit = arg[1] or 1000
 for i = 1, limit do
    mrf:send_frame(0x0, string.char(0x01,0x02,0x03,0x04,0x05,0x06));
-   -- mrf:debug()
    print("set beakon packet #" .. i)
 end
 -- unistd.sleep(1)
